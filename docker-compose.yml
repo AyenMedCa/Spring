@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  # Servicio de la API Producto
+  api-producto:
+    build:
+      context: ./producto  # El directorio donde está el Dockerfile
+      dockerfile: Dockerfile  # Nombre del archivo Dockerfile
+    container_name: api-producto
+    ports:
+      - "8080:8080"  # Mapea el puerto 8080 del contenedor al puerto 8080 del host
+    environment:
+      - SPRING_APPLICATION_NAME=producto
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db-producto:3306/productodb
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+    depends_on:
+      mysql-db-producto:
+        condition: service_healthy
+    networks:
+      - java-network
+    volumes:
+      - java_logs:/app/logs  # Volumen para almacenar logs de la aplicación (opcional)
+
+  # Servicio de la API Orden
+  api-orden:
+    build:
+      context: ./orden  # El directorio donde está el Dockerfile
+      dockerfile: Dockerfile  # Nombre del archivo Dockerfile
+    container_name: api-orden
+    ports:
+      - "8081:8080"  # Mapea el puerto 8080 del contenedor al puerto 8081 del host
+    environment:
+      - SPRING_APPLICATION_NAME=orden
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db-orden:3306/orden_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+    depends_on:
+      mysql-db-orden:
+        condition: service_healthy
+    networks:
+      - java-network
+    volumes:
+      - java_logs:/app/logs  # Volumen para almacenar logs de la aplicación (opcional)
+
+  # Servicio de la API Users
+  api-users:
+    build:
+      context: ./users  # El directorio donde está el Dockerfile
+      dockerfile: Dockerfile  # Nombre del archivo Dockerfile
+    container_name: api-users
+    ports:
+      - "8082:8080"  # Mapea el puerto 8080 del contenedor al puerto 8082 del host
+    environment:
+      - SPRING_APPLICATION_NAME=users
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db-users:3306/api_users
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+    depends_on:
+      mysql-db-users:
+        condition: service_healthy
+    networks:
+      - java-network
+    volumes:
+      - java_logs:/app/logs  # Volumen para almacenar logs de la aplicación (opcional)
+
+  # Contenedor MySQL para la API Producto
+  mysql-db-producto:
+    image: mysql:8.0
+    container_name: mysql-db-producto
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: productodb  # Inicializa la base de datos productodb
+    ports:
+      - "3309:3306"  # Mapea el puerto 3306 del contenedor al puerto 3308 del host
+    volumes:
+      - mysql_data_producto:/var/lib/mysql  # Volumen para almacenar los datos de MySQL
+    networks:
+      - java-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Contenedor MySQL para la API Orden
+  mysql-db-orden:
+    image: mysql:8.0
+    container_name: mysql-db-orden
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: orden_db  # Inicializa la base de datos orden_db
+    ports:
+      - "3310:3306"  # Mapea el puerto 3306 del contenedor al puerto 3309 del host
+    volumes:
+      - mysql_data_orden:/var/lib/mysql  # Volumen para almacenar los datos de MySQL
+    networks:
+      - java-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Contenedor MySQL para la API Users
+  mysql-db-users:
+    image: mysql:8.0
+    container_name: mysql-db-users
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: api_users  # Inicializa la base de datos api_users
+    ports:
+      - "3311:3306"  # Mapea el puerto 3306 del contenedor al puerto 3310 del host
+    volumes:
+      - mysql_data_users:/var/lib/mysql  # Volumen para almacenar los datos de MySQL
+    networks:
+      - java-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+volumes:
+  mysql_data_producto:  # Volumen persistente para los datos de MySQL para el producto
+  mysql_data_orden:     # Volumen persistente para los datos de MySQL para la orden
+  mysql_data_users:     # Volumen persistente para los datos de MySQL para los usuarios
+  java_logs:            # Volumen opcional para logs de la aplicación Java
+
+networks:
+  java-network:
+    driver: bridge
