@@ -1,0 +1,41 @@
+server:
+  port: 8383
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      mvc:
+        routes:
+          - id: producto-service
+            uri: lb://producto
+            predicates:
+              - Path=/producto/**
+            filters:
+              - AddRequestHeader=Authorization, "#{T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getCredentials()}"
+          - id: orden-service
+            uri: lb://orden
+            predicates:
+              - Path=/orden/**
+            filters:
+              - AddRequestHeader=Authorization, "#{T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getCredentials()}"
+          - id: users-service
+            uri: lb://users
+            predicates:
+              - Path=/users/**
+            filters:
+              - AddRequestHeader=Authorization, "#{T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getCredentials()}"
+  messages:
+    encoding: UTF-8
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/realms/spring-keycloak-realm
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-service:8787/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+
